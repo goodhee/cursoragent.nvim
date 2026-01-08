@@ -19,7 +19,7 @@ A Neovim plugin for seamless integration with Cursor Agent CLI. Provides termina
 
 ```lua
 {
-  "eun2ce/cursoragent.nvim",
+  "aug6th/cursoragent.nvim",
   dependencies = {
     "nvim-lua/plenary.nvim",
   },
@@ -33,7 +33,7 @@ A Neovim plugin for seamless integration with Cursor Agent CLI. Provides termina
 
 ```lua
 use({
-  "eun2ce/cursoragent.nvim",
+  "aug6th/cursoragent.nvim",
   requires = { "nvim-lua/plenary.nvim" },
   config = function()
     require("cursoragent").setup({})
