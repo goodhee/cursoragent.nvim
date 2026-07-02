@@ -49,6 +49,13 @@ function M.disable()
     vim.loop.timer_stop(M.state.debounce_timer)
     M.state.debounce_timer = nil
   end
+
+  -- Also stop any pending demotion timer so it does not fire against torn-down
+  -- state (and its uv handle is not leaked).
+  if M.state.demotion_timer then
+    vim.loop.timer_stop(M.state.demotion_timer)
+    M.state.demotion_timer = nil
+  end
 end
 
 ---Creates autocommands for tracking selections.

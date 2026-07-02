@@ -117,6 +117,13 @@ function M.process_data(client, data, on_message, on_close, on_error, auth_token
     local parsed_frame, bytes_consumed = frame.parse_frame(client.buffer)
 
     if not parsed_frame then
+      -- parse_frame returns (nil, 0) for an incomplete frame (wait for more data)
+      -- and (nil, -1) for a protocol violation. On a protocol error, close the
+      -- connection instead of spinning on the same bad bytes forever.
+      if bytes_consumed and bytes_consumed < 0 then
+        on_error(client, "WebSocket protocol error in frame")
+        M.close_client(client, 1002, "Protocol error")
+      end
       break
     end
 
@@ -213,17 +220,23 @@ function M.close_client(client, code, reason)
   reason = reason or ""
 
   if client.handshake_complete then
+    -- Async close: send the CLOSE frame, then close the handle in the write
+    -- callback. State is "closing" until that completes.
+    client.state = "closing"
     local close_frame = frame.create_close_frame(code, reason)
     client.tcp_handle:write(close_frame, function()
       client.state = "closed"
-      client.tcp_handle:close()
+      if not client.tcp_handle:is_closing() then
+        client.tcp_handle:close()
+      end
     end)
   else
+    -- Synchronous close: no handshake, so no CLOSE frame is sent.
     client.state = "closed"
-    client.tcp_handle:close()
+    if not client.tcp_handle:is_closing() then
+      client.tcp_handle:close()
+    end
   end
-
-  client.state = "closing"
 end
 
 ---Check if a client connection is alive

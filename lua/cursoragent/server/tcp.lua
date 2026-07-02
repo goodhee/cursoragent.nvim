@@ -158,7 +158,10 @@ function M._remove_client(server, client)
   if server.clients[client.id] then
     server.clients[client.id] = nil
 
-    if not client.tcp_handle:is_closing() then
+    -- close_client may have already scheduled an async close (CLOSE-frame write
+    -- callback). Only force-close when no close is in progress, otherwise the
+    -- pending callback would close an already-closing handle (double close).
+    if client.state ~= "closing" and client.state ~= "closed" and not client.tcp_handle:is_closing() then
       client.tcp_handle:close()
     end
   end
