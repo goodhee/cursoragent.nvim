@@ -13,6 +13,11 @@ function M.register_commands(cursor_agent)
     cursor_agent.toggle()
   end, { desc = 'Toggle Cursor Agent terminal' })
 
+  vim.api.nvim_create_user_command('CursorAgentVersion', function()
+    local version = require('cursoragent.version').string()
+    vim.notify('cursoragent.nvim version: ' .. version, vim.log.levels.INFO)
+  end, { desc = 'Display cursoragent.nvim version' })
+
   vim.api.nvim_create_user_command('CursorAgentPrompt', function()
     local util = require('cursoragent.util')
     util.notify('CursorAgentPrompt is deprecated; use :CursorAgent', vim.log.levels.WARN)
