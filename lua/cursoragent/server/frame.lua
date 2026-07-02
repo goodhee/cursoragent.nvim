@@ -65,18 +65,18 @@ function M.parse_frame(data)
   }
 
   if not valid_opcodes[opcode] then
-    return nil, 0 -- Invalid opcode
+    return nil, -1 -- Invalid opcode (protocol error)
   end
 
   -- Check for reserved bits (must be 0)
   if rsv1 or rsv2 or rsv3 then
-    return nil, 0 -- Protocol error
+    return nil, -1 -- Reserved bits set (protocol error)
   end
 
   -- Control frames must have fin=1 and payload ≤ 125 (RFC 6455 Section 5.5)
   if opcode >= M.OPCODE.CLOSE then
     if not fin or payload_len > 125 then
-      return nil, 0 -- Protocol violation
+      return nil, -1 -- Control frame violation (protocol error)
     end
   end
 
@@ -103,13 +103,13 @@ function M.parse_frame(data)
 
     -- Prevent extremely large payloads (DOS protection)
     if actual_payload_len > 100 * 1024 * 1024 then -- 100MB limit
-      return nil, 0
+      return nil, -1 -- Oversized payload (protocol error / DoS guard)
     end
   end
 
   -- Additional payload length validation
   if actual_payload_len < 0 then
-    return nil, 0 -- Invalid negative length
+    return nil, -1 -- Invalid negative length (protocol error)
   end
 
   -- Read mask if present
@@ -138,19 +138,19 @@ function M.parse_frame(data)
 
   -- Validate text frame payload is valid UTF-8
   if opcode == M.OPCODE.TEXT and not utils.is_valid_utf8(payload) then
-    return nil, 0 -- Invalid UTF-8 in text frame
+    return nil, -1 -- Invalid UTF-8 in text frame (protocol error)
   end
 
   -- Basic validation for close frame payload
   if opcode == M.OPCODE.CLOSE and actual_payload_len > 0 then
     if actual_payload_len == 1 then
-      return nil, 0 -- Close frame with 1 byte payload is invalid
+      return nil, -1 -- Close frame with 1 byte payload is invalid (protocol error)
     end
     -- Allow most close codes for compatibility, only validate UTF-8 for reason text
     if actual_payload_len > 2 then
       local reason = payload:sub(3)
       if not utils.is_valid_utf8(reason) then
-        return nil, 0 -- Invalid UTF-8 in close reason
+        return nil, -1 -- Invalid UTF-8 in close reason (protocol error)
       end
     end
   end

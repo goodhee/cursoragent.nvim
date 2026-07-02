@@ -163,12 +163,14 @@ local function handler(params)
     local start_line = params.startLine or 1
     local end_line = params.endLine or start_line
 
-    -- Convert to 0-based indexing for vim API
-    local start_pos = { start_line - 1, 0 }
-    local end_pos = { end_line - 1, -1 } -- -1 means end of line
+    -- nvim_buf_set_mark expects a 1-based line and a 0-based byte column that
+    -- must be >= 0 (unlike nvim_win_set_cursor, -1 is not accepted). Use the
+    -- last byte of the end line as the selection end column.
+    local end_line_text = (vim.api.nvim_buf_get_lines(0, end_line - 1, end_line, false))[1] or ""
+    local end_col = math.max(0, #end_line_text - 1)
 
-    vim.api.nvim_buf_set_mark(0, "<", start_pos[1], start_pos[2], {})
-    vim.api.nvim_buf_set_mark(0, ">", end_pos[1], end_pos[2], {})
+    vim.api.nvim_buf_set_mark(0, "<", start_line, 0, {})
+    vim.api.nvim_buf_set_mark(0, ">", end_line, end_col, {})
     vim.cmd("normal! gv")
 
     message = "Opened file and selected lines " .. start_line .. " to " .. end_line

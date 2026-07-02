@@ -266,7 +266,7 @@ function M.apply(user_config)
       cmd = cmd:gsub("%s+agent%s*", " ")
       cmd = cmd:gsub("%s+%-%-resume%s*", " ")
       cmd = cmd:gsub("%s+%-%-model%s+%S+%s*", " ")
-      cmd = cmd:trim()
+      cmd = vim.trim(cmd)
       if cmd ~= "" then
         converted_config.terminal_cmd = cmd
     end

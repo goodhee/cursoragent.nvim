@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `config.apply()` no longer crashes when the legacy `command` config key is used
+  (`cmd:trim()` → `vim.trim(cmd)`); this previously aborted `setup()` entirely.
+- MCP server no longer errors when a client sends valid JSON that is not an
+  object (scalar / `null`): the JSON-RPC error path no longer indexes a non-table.
+- WebSocket frame parsing now distinguishes protocol violations from incomplete
+  frames (`nil, -1` vs `nil, 0`); a malformed frame now closes the connection
+  instead of wedging it forever and growing the read buffer unbounded.
+- Fixed a double `uv_close` on keepalive timeout that threw inside a libuv
+  callback ("handle is already closing").
+- `close_client` now reports accurate state and guards against closing an
+  already-closing handle.
+- `openFile` line-range selection now uses a 1-based mark line and a valid
+  column (was passing `col = -1` and an off-by-one line, so selection failed).
+- Selection tracking `disable()` now also stops the pending demotion timer
+  (was a uv handle leak that could fire against torn-down state).
+- Terminal command splitting drops empty argv entries from repeated spaces.
+
 ## [0.2.0] - 2026-07-02
 
 Adds a configurable keymap layer and the release/versioning infrastructure.

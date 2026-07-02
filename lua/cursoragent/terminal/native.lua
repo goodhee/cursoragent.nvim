@@ -81,7 +81,9 @@ local function open_terminal(cmd_string, env_table, effective_config, focus)
 
   local term_cmd_arg
   if cmd_string:find(" ", 1, true) then
-    term_cmd_arg = vim.split(cmd_string, " ", { plain = true, trimempty = false })
+    -- trimempty avoids empty argv entries from consecutive spaces being passed
+    -- to termopen (which would be treated as empty arguments).
+    term_cmd_arg = vim.split(cmd_string, " ", { plain = true, trimempty = true })
   else
     term_cmd_arg = { cmd_string }
   end
