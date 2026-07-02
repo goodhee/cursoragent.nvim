@@ -6,16 +6,12 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version number (e.g., 0.1.0)'
+      tag:
+        description: 'Existing tag to release (e.g. v0.2.1)'
         required: true
-      prerelease:
-        description: 'Is this a prerelease?'
-        type: boolean
-        default: false
 
 jobs:
-  create-release:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,66 +20,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Resolve version
-        id: get_version
-        run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          else
-            VERSION="${{ github.event.inputs.version }}"
-          fi
-          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Resolved version: ${VERSION}"
-
-      - name: Validate version format
-        run: |
-          if ! [[ "${{ steps.get_version.outputs.VERSION }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
-            echo "::error::Version must look like X.Y.Z (optionally with a pre-release suffix)"
-            exit 1
-          fi
-
-      - name: Extract changelog section
-        id: changelog
-        run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
-          if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
-            echo "Extracting changelog for ${VERSION}"
-            awk -v ver="## [${VERSION}]" '
-              index($0, ver) == 1 {flag=1; next}
-              /^## \[/ {if (flag) exit}
-              /^\[[^]]+\]:/ {if (flag) exit}
-              flag {print}
-            ' CHANGELOG.md > RELEASE_NOTES.md
-          else
-            echo "No CHANGELOG entry for ${VERSION}; falling back to git log"
-            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-            if [[ -n "$PREV_TAG" ]]; then
-              git log --pretty=format:'* %s (%an)' "${PREV_TAG}..HEAD" > RELEASE_NOTES.md
-            else
-              git log --pretty=format:'* %s (%an)' > RELEASE_NOTES.md
-            fi
-          fi
-          echo "----- release notes -----"
-          cat RELEASE_NOTES.md
-
-      - name: Determine prerelease
-        id: prerelease
-        run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            if [[ "${{ github.ref_name }}" =~ -(alpha|beta|rc|dev|test) ]]; then
-              echo "IS_PRERELEASE=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "IS_PRERELEASE=false" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          name: v${{ steps.get_version.outputs.VERSION }}
-          body_path: RELEASE_NOTES.md
-          prerelease: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: ${{ github.event.inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          prerelease: ${{ contains(github.event.inputs.tag || github.ref_name, '-') }}
           token: ${{ secrets.GITHUB_TOKEN }}
