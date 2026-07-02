@@ -309,6 +309,12 @@ function M.toggle_terminal()
   M.toggle()
 end
 
+---Return the plugin version string (e.g. "0.1.0")
+---@return string version
+function M.version()
+  return require("cursoragent.version").string()
+end
+
 ---Setup function for the plugin
 ---@param user_config? table User configuration table (optional)
 function M.setup(user_config)
@@ -368,6 +374,14 @@ function M.setup(user_config)
 
   -- Register commands
   commands.register_commands(M)
+
+  -- Register keymaps (opt-out via config.keymaps.* = false)
+  local keymaps_ok, keymaps = pcall(require, "cursoragent.keymaps")
+  if keymaps_ok and keymaps.register_keymaps then
+    keymaps.register_keymaps(M, M.state.config)
+  else
+    logger.error("init", "Failed to load cursoragent.keymaps module for setup.")
+  end
 
   -- Setup VimLeavePre autocmd to stop server on exit
   vim.api.nvim_create_autocmd("VimLeavePre", {

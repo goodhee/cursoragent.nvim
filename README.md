@@ -59,6 +59,26 @@ use({
 - `:CursorAgentSelection` - Send the current visual selection
 - `:CursorAgentBuffer` - Send the full current buffer
 
+## Key Mappings
+
+Default key mappings (all configurable, set to `false` to disable):
+
+- `<C-,>` - Toggle the Cursor Agent terminal (normal and terminal modes)
+
+When focused inside the Cursor Agent terminal:
+
+- `<C-h/j/k/l>` - Move to the window left/down/up/right (buffer-local, does not
+  override your global mappings)
+- `<C-f>` / `<C-b>` - Scroll the conversation a full page down / up
+
+Variant keymaps are opt-in. Map a variant command by adding it under
+`keymaps.toggle.variants`, e.g. `{ ask = "<leader>caa" }` maps `:CursorAgentAsk`.
+If [which-key](https://github.com/folke/which-key.nvim) is installed, the toggle
+and variant keymaps are registered automatically.
+
+The window navigation and scrolling keymaps are **buffer-local** to Cursor Agent
+terminal buffers, so they never clash with your own global `<C-h/j/k/l>` mappings.
+
 ## Configuration
 
 ```lua
@@ -95,6 +115,17 @@ require("cursoragent").setup({
     keep_terminal_focus = false, -- Keep focus in terminal after diff opens
     hide_terminal_in_new_tab = false, -- Hide terminal in new diff tab
     on_new_file_reject = "keep_empty", -- "keep_empty" or "close_window"
+  },
+
+  -- Keymaps (set any entry to false to disable)
+  keymaps = {
+    toggle = {
+      normal = "<C-,>", -- Normal mode: toggle Cursor Agent
+      terminal = "<C-,>", -- Terminal mode: toggle Cursor Agent
+      variants = {}, -- Per-variant normal mode keymaps, e.g. { ask = "<leader>caa" }
+    },
+    window_navigation = true, -- <C-h/j/k/l> to move between windows from the terminal
+    scrolling = true, -- <C-f/b> to scroll the conversation in the terminal
   },
 
   -- Command Settings (optional)

@@ -27,6 +27,16 @@ M.defaults = {
     hide_terminal_in_new_tab = false, -- If true and opening in a new tab, do not show Cursor Agent terminal there
     on_new_file_reject = "keep_empty", -- "keep_empty" leaves an empty buffer; "close_window" closes the placeholder split
   },
+  -- Keymaps (conventional defaults; set any entry to false to disable)
+  keymaps = {
+    toggle = {
+      normal = "<C-,>", -- Normal mode keymap for toggling Cursor Agent, false to disable
+      terminal = "<C-,>", -- Terminal mode keymap for toggling Cursor Agent, false to disable
+      variants = {}, -- Per-variant normal mode keymaps, e.g. { ask = "<leader>caa" }
+    },
+    window_navigation = true, -- Enable <C-h/j/k/l> window navigation from the terminal
+    scrolling = true, -- Enable <C-f/b> page scrolling in the terminal
+  },
   terminal = nil, -- Will be lazy-loaded to avoid circular dependency
 }
 
@@ -148,6 +158,39 @@ function M.validate(config)
   end
   if config.diff_opts.open_in_current_tab ~= nil then
     assert(type(config.diff_opts.open_in_current_tab) == "boolean", "diff_opts.open_in_current_tab must be a boolean")
+  end
+
+  -- Validate keymaps (optional; only checked when present)
+  if config.keymaps ~= nil then
+    assert(type(config.keymaps) == "table", "keymaps must be a table")
+    if config.keymaps.toggle ~= nil then
+      assert(type(config.keymaps.toggle) == "table", "keymaps.toggle must be a table")
+      local t = config.keymaps.toggle
+      assert(
+        t.normal == nil or t.normal == false or type(t.normal) == "string",
+        "keymaps.toggle.normal must be a string or false"
+      )
+      assert(
+        t.terminal == nil or t.terminal == false or type(t.terminal) == "string",
+        "keymaps.toggle.terminal must be a string or false"
+      )
+      if t.variants ~= nil then
+        assert(type(t.variants) == "table", "keymaps.toggle.variants must be a table")
+        for name, key in pairs(t.variants) do
+          assert(type(name) == "string", "keymaps.toggle.variants keys must be strings")
+          assert(
+            key == false or type(key) == "string",
+            "keymaps.toggle.variants values must be a string or false"
+          )
+        end
+      end
+    end
+    if config.keymaps.window_navigation ~= nil then
+      assert(type(config.keymaps.window_navigation) == "boolean", "keymaps.window_navigation must be a boolean")
+    end
+    if config.keymaps.scrolling ~= nil then
+      assert(type(config.keymaps.scrolling) == "boolean", "keymaps.scrolling must be a boolean")
+    end
   end
 
   -- Validate env

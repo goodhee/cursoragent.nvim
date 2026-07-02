@@ -70,9 +70,14 @@ function M.open_float_term(opts)
     end,
   })
 
-  pcall(vim.keymap.set, 'n', 'q', function()
-    M.close(win)
-  end, { buffer = bufnr, nowait = true, silent = true })
+  -- Close the floating window from normal mode with either `q` or `<Esc>`.
+  -- Note: `<Esc>` is intentionally NOT bound in terminal mode so it can still be
+  -- delivered to the interactive Cursor Agent TUI (cancel/back).
+  for _, key in ipairs({ 'q', '<Esc>' }) do
+    pcall(vim.keymap.set, 'n', key, function()
+      M.close(win)
+    end, { buffer = bufnr, nowait = true, silent = true })
+  end
 
   -- Jump to bottom and enter terminal-mode for immediate typing
   local ok_lines, line_count = pcall(vim.api.nvim_buf_line_count, bufnr)
@@ -114,9 +119,14 @@ function M.open_float_win_for_buf(bufnr, opts)
   vim.wo[win].signcolumn = "no"
 
   -- Ensure the convenience close mapping exists on this buffer
-  pcall(vim.keymap.set, 'n', 'q', function()
-    M.close(win)
-  end, { buffer = bufnr, nowait = true, silent = true })
+  -- Close the floating window from normal mode with either `q` or `<Esc>`.
+  -- Note: `<Esc>` is intentionally NOT bound in terminal mode so it can still be
+  -- delivered to the interactive Cursor Agent TUI (cancel/back).
+  for _, key in ipairs({ 'q', '<Esc>' }) do
+    pcall(vim.keymap.set, 'n', key, function()
+      M.close(win)
+    end, { buffer = bufnr, nowait = true, silent = true })
+  end
 
   -- Jump to bottom and enter terminal-mode for immediate typing
   local ok_lines, line_count = pcall(vim.api.nvim_buf_line_count, bufnr)

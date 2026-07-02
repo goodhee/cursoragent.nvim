@@ -133,6 +133,8 @@ local function open_terminal(cmd_string, env_table, effective_config, focus)
   bufnr = vim.api.nvim_get_current_buf()
   vim.bo[bufnr].bufhidden = "hide"
   -- buftype=terminal is set by termopen
+  -- Tag the buffer so keymaps and integrations can identify cursoragent terminals
+  vim.bo[bufnr].filetype = "cursoragent_terminal"
 
   if focus then
     -- Focus the terminal: switch to terminal window and enter insert mode
